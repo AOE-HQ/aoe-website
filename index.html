@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AOE | AI Office Environment</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #fcfdfe;
+            --text-primary: #1a1a1a;
+            --text-secondary: #757575;
+            --text-tertiary: #a1a1aa; /* Even lighter gray */
+            --accent-blue: #007aff;
+            --accent-purple: #af52de;
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+            --card-hover-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Ambient Background - Animated & Enhanced Flow */
+        .ambient-light {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.5) 100%),
+                radial-gradient(circle at 20% 30%, rgba(0, 122, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(175, 82, 222, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 20% 80%, rgba(175, 82, 222, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0, 122, 255, 0.15) 0%, transparent 50%);
+            filter: blur(80px);
+            animation: ambientMove 25s ease-in-out infinite alternate;
+            opacity: 0.8;
+        }
+
+        @keyframes ambientMove {
+            0% { transform: rotate(0deg) scale(1); } 
+            100% { transform: rotate(10deg) scale(1.1); }
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 1.2rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.6);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        nav.scrolled {
+            padding: 0.8rem 2rem;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(90deg, #007aff, #af52de);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+            z-index: 2;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+        
+        /* Subtle underline hover effect */
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 50%;
+            background: var(--accent-blue);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+            opacity: 0;
+        }
+        
+        .nav-links a:hover::after {
+            width: 20px;
+            opacity: 0.5;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            z-index: 2;
+        }
+
+        /* Language Switcher Dropdown - FIXED */
+        .lang-dropdown {
+            position: relative;
+            display: flex;
+            align-items: center;
+            height: 40px;
+        }
+
+        .lang-btn {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(0,0,0,0.1);
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+            backdrop-filter: blur(5px);
+            z-index: 102;
+        }
+
+        .lang-btn:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .lang-menu {
+            display: none;
+            position: absolute;
+            top: 100%; 
+            right: -6px; 
+            padding-top: 15px; 
+            z-index: 101;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .lang-menu-inner {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            border-radius: 20px;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 8px 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+            width: 44px;
+        }
+
+        .lang-dropdown:hover .lang-menu {
+            display: block;
+        }
+
+        .lang-menu a {
+            cursor: pointer;
+            font-size: 1.4rem;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+        }
+
+        .lang-menu a:hover {
+            background: rgba(0,0,0,0.05);
+            transform: scale(1.15);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .cta-button {
+            padding: 0.6rem 1.2rem;
+            background: var(--text-primary);
+            color: white;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            white-space: nowrap;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            background: #000;
+        }
+
+        /* Hero Section - Compact & Moved Up */
+        .hero {
+            min-height: 90vh; /* Reduced from 100vh */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 6rem 2rem 2rem; /* Reduced top/bottom padding */
+            position: relative;
+        }
+
+        .hero h1 {
+            font-size: 4.5rem;
+            line-height: 1.1;
+            margin-bottom: 1.2rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(180deg, #1a1a1a 0%, #4a4a4a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p.subtitle {
+            font-size: 1.4rem;
+            color: var(--text-secondary);
+            max-width: 800px;
+            margin-bottom: 2.5rem;
+            font-weight: 400;
+            line-height: 1.5;
+        }
+
+        .hero-tags {
+            display: flex;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tag {
+            padding: 0.4rem 1rem;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            backdrop-filter: blur(8px);
+            transition: transform 0.3s ease;
+        }
+        
+        .tag:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Container & Grid Tighter Spacing */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 2rem; /* Reduced padding */
+        }
+
+        /* Section Titles */
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            letter-spacing: -0.5px;
+        }
+
+        .section-desc {
+            text-align: center;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 3rem; /* Reduced margin */
+            font-size: 1.1rem;
+        }
+
+        /* Feature Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem; /* Reduced gap */
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2.2rem;
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-6px) scale(1.01);
+            box-shadow: var(--card-hover-shadow);
+            border-color: rgba(255, 255, 255, 1);
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 1.2rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glass-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 0.8rem;
+            font-weight: 700;
+        }
+
+        .glass-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Manifesto Section (Tighter) */
+        .manifesto-section {
+            padding: 4rem 2rem; /* Reduced */
+            background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(240, 242, 245, 0.5) 100%);
+        }
+
+        .manifesto-quote {
+            font-size: 2rem;
+            font-weight: 300;
+            text-align: center;
+            max-width: 900px;
+            margin: 2rem auto; /* Reduced */
+            color: var(--text-secondary);
+        }
+
+        .manifesto-quote em {
+            font-style: normal;
+            color: var(--text-primary);
+            font-weight: 600;
+            border-bottom: 2px solid rgba(0, 122, 255, 0.3);
+        }
+
+        /* Environment Era Section (Tighter) */
+        .environment-section {
+            padding: 4rem 2rem; /* Reduced */
+            text-align: center;
+            background: linear-gradient(180deg, rgba(240, 242, 245, 0.5) 0%, rgba(255,255,255,0) 100%);
+        }
+        
+        .environment-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .tools-list {
+            margin: 1.5rem 0;
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            opacity: 0.85;
+            line-height: 1.7;
+        }
+
+        .highlight-text {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-top: 1.5rem;
+        }
+
+        /* Detailed Features - Alternating Layout */
+        .feature-row {
+            display: flex;
+            align-items: center;
+            gap: 3.5rem;
+            margin-bottom: 4rem; /* Reduced from 6rem */
+        }
+
+        .feature-row:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .feature-content {
+            flex: 1;
+        }
+
+        .feature-visual {
+            flex: 1;
+            height: 380px;
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.4s ease;
+        }
+
+        .feature-row:hover .feature-visual {
+            transform: scale(1.02);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.09);
+        }
+        
+        .mock-window {
+            width: 80%;
+            height: 70%;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .mock-header {
+            height: 30px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            gap: 6px;
+        }
+        
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #ddd; }
+        .dot.red { background: #ff5f57; }
+        .dot.yellow { background: #febc2e; }
+        .dot.green { background: #28c840; }
+        
+        .mock-body {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .feature-content h3 {
+            font-size: 1.8rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .feature-content p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-list li {
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            color: var(--text-primary);
+        }
+
+        .feature-list li i {
+            color: var(--accent-blue);
+        }
+
+        /* Footer */
+        footer {
+            background: #fff;
+            padding: 3rem 2rem;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .footer-logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 0.8rem;
+            display: inline-block;
+            background: linear-gradient(90deg, #007aff, #af52de);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .footer-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .copyright {
+            color: #ccc;
+            font-size: 0.85rem;
+        }
+
+        /* Improved Animations - Flow */
+        @keyframes flowUp {
+            from { opacity: 0; transform: translateY(30px); } 
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-in {
+            animation: flowUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .nav-links { 
+                position: static; 
+                transform: none; 
+                display: none; 
+            }
+            .hero h1 { font-size: 2.8rem; }
+            .feature-row { flex-direction: column !important; gap: 2rem; }
+            .nav-right { gap: 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient Background -->
+    <div class="ambient-light"></div>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="logo">AOE</div>
+        
+        <div class="nav-links">
+            <a href="#manifesto" data-i18n="nav_manifesto">理念</a>
+            <a href="#environment" data-i18n="nav_environment">环境</a>
+            <a href="#features" data-i18n="nav_features">功能</a>
+            <a href="#vision" data-i18n="nav_vision">愿景</a>
+        </div>
+
+        <div class="nav-right">
+            <!-- Language Dropdown -->
+            <div class="lang-dropdown">
+                <button class="lang-btn" id="current-lang-btn">🇨🇳</button>
+                <div class="lang-menu">
+                    <div class="lang-menu-inner">
+                        <a onclick="changeLanguage('zh')">🇨🇳</a>
+                        <a onclick="changeLanguage('en')">🇺🇸</a>
+                        <a onclick="changeLanguage('ja')">🇯🇵</a>
+                        <a onclick="changeLanguage('de')">🇩🇪</a>
+                        <a onclick="changeLanguage('ko')">🇰🇷</a>
+                        <a onclick="changeLanguage('es')">🇪🇸</a>
+                    </div>
+                </div>
+            </div>
+            <a href="#" class="cta-button" data-i18n="nav_cta">Join Waitlist</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-tags animate-in">
+            <span class="tag" data-i18n="hero_tag_1">All in one</span>
+            <span class="tag" data-i18n="hero_tag_2">Local Super Agent</span>
+            <span class="tag" data-i18n="hero_tag_3">Context Aware</span>
+            <span class="tag" data-i18n="hero_tag_4">Your Habits & Taste</span>
+        </div>
+        <h1 class="animate-in delay-1">
+            <span data-i18n="hero_title_main">拒绝给 AI 打工</span><br>
+            <span style="display:block; margin: 25px auto 0; max-width: 800px; white-space: normal; color: var(--text-tertiary); font-weight: 300; font-size: 1rem; line-height: 1.6;" data-i18n="hero_title_sub">
+                You are highly paid, yet you spend half your day doing manual labor. <br>
+                You act as a Data Mule for your AI. You fetch files. You feed context. You switch windows. You bridge the gap between your actual work and the "smart" tool that is supposed to help you.
+            </span>
+        </h1>
+        <p class="subtitle animate-in delay-2" data-i18n="hero_subtitle">
+            不要搜索，去命令。不要整理，去流动。Don't Manage. Create.<br>AOE 是你的『原生 Agent 办公环境』，一个真正懂你、为你思考的操作系统级 AI。
+        </p>
+        <div class="animate-in delay-3">
+            <a href="#" class="cta-button" style="padding: 1rem 2.5rem; font-size: 1.05rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1);" data-i18n="hero_cta">开始体验 AOE</a>
+        </div>
+    </section>
+
+    <!-- Manifesto Section -->
+    <section id="manifesto" class="manifesto-section">
+        <div class="container">
+            <div class="section-title" data-i18n="manifesto_title">The Frictionless Standard</div>
+            <p class="section-desc" data-i18n="manifesto_desc">我们拒绝让高薪的你成为 AI 的"数据搬运工"。</p>
+
+            <div class="manifesto-quote">
+                "Upload. Download. Copy. Paste. Repeat."
+                <em>Stop.</em>
+            </div>
+
+            <div class="grid">
+                <div class="glass-card">
+                    <div class="card-icon"><i class="fas fa-ban"></i></div>
+                    <h3 data-i18n="card_1_title">No Uploads/Downloads</h3>
+                    <p data-i18n="card_1_desc">你的文件不是需要被搬运的"素材"，而是你的知识库。AOE 就地读取，无需迁移。</p>
+                </div>
+                <div class="glass-card">
+                    <div class="card-icon"><i class="fas fa-brain"></i></div>
+                    <h3 data-i18n="card_2_title">No "Prompt Engineering"</h3>
+                    <p data-i18n="card_2_desc">为什么要向陌生人解释你的项目？AOE 知道历史、语调和目标。上下文即是 Prompt。</p>
+                </div>
+                <div class="glass-card">
+                    <div class="card-icon"><i class="fas fa-columns"></i></div>
+                    <h3 data-i18n="card_3_title">No Window Switching</h3>
+                    <p data-i18n="card_3_desc">别再在编辑器和浏览器之间 Alt-Tab 了。文件管理、浏览器和 AI 现已合而为一。</p>
+                </div>
+                <div class="glass-card">
+                     <div class="card-icon"><i class="fas fa-copy"></i></div>
+                     <h3 data-i18n="card_4_title">No Copy-Paste</h3>
+                     <p data-i18n="card_4_desc">停止在不同应用间复制粘贴。数据流应该是自动的、无缝的。</p>
+                </div>
+                 <div class="glass-card">
+                    <div class="card-icon"><i class="fas fa-project-diagram"></i></div>
+                    <h3 data-i18n="card_5_title">No Canvas-MCP</h3>
+                    <p data-i18n="card_5_desc">用户的文档即是一切，AOE 会自动学习、组织、工作，不需要拖拉拽各种工作流。</p>
+                </div>
+                <div class="glass-card">
+                    <div class="card-icon"><i class="fas fa-sync-alt"></i></div>
+                    <h3 data-i18n="card_6_title">No Repeat</h3>
+                    <p data-i18n="card_6_desc">AOE 会学习你工作中的习惯和偏好，你也可以下载别人分享的最佳实践 ComboSkills，或者 Claude Skills。如果会重复，就交给 Agent。</p>
+               </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Environment Era Section -->
+    <section id="environment" class="environment-section">
+        <div class="container environment-content">
+            <div class="section-title" data-i18n="env_title">The chatbot era is over.<br>The Environment era begins.</div>
+            
+            <div class="tools-list" data-i18n="env_tools">
+                我们连接一切工具<br>
+                (Notion, Office365, Slack, X, Discord, ChatGPT, Claude, Linear, Jira, Zoom, Teams, Enterprise Internal Systems...)
+            </div>
+            
+            <p class="highlight-text" style="color: var(--text-secondary); margin-bottom: 1.5rem;" data-i18n="env_text_1">
+                Other AI agents try to be your "Manager." They want to plan your tasks, restructure your projects, and tell you how to work.
+            </p>
+            
+            <p class="highlight-text" style="font-size: 1.8rem; background: linear-gradient(90deg, #007aff, #af52de); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;">
+                <span data-i18n="env_text_2">But AOE <strong>manages</strong> them all for you.</span>
+            </p>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="container">
+        <div class="section-title" style="margin-bottom: 3rem;" data-i18n="features_title">重塑你的工作流</div>
+
+        <!-- Feature 1 -->
+        <div class="feature-row">
+            <div class="feature-content">
+                <h3 data-i18n="feat_1_title">统一入口 (Unified Entry)</h3>
+                <p data-i18n="feat_1_desc">AOE 终结了"下载文件夹"的混乱。它智能地管理你的文件系统、网页浏览和 AI 交互。</p>
+                <ul class="feature-list">
+                    <li data-i18n="feat_1_li_1"><i class="fas fa-check-circle"></i> 自动根据项目重命名下载文件</li>
+                    <li data-i18n="feat_1_li_2"><i class="fas fa-check-circle"></i> 语义化搜索本地所有资产</li>
+                    <li data-i18n="feat_1_li_3"><i class="fas fa-check-circle"></i> 文件、网页、对话 All-in-One 视图</li>
+                </ul>
+            </div>
+            <div class="feature-visual">
+                <div class="mock-window">
+                    <div class="mock-header">
+                        <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
+                    </div>
+                    <div class="mock-body" style="display:flex; align-items:center; justify-content:center; color:#adb5bd; font-size:0.8rem;">
+                        Files + Browser + Agent
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="feature-row">
+            <div class="feature-content">
+                <h3 data-i18n="feat_2_title">主动上下文 (Active Context)</h3>
+                <p data-i18n="feat_2_desc">AOE 不是被动的聊天机器人，它是你的影子。它理解你当前的任务，并主动准备好所需的背景资料。</p>
+                <ul class="feature-list">
+                    <li data-i18n="feat_2_li_1"><i class="fas fa-check-circle"></i> 自动注入相关文件作为上下文</li>
+                    <li data-i18n="feat_2_li_2"><i class="fas fa-check-circle"></i> 跨模态理解：文档、图片、音频</li>
+                    <li data-i18n="feat_2_li_3"><i class="fas fa-check-circle"></i> 隐私优先：数据本地处理，云端脱敏</li>
+                </ul>
+            </div>
+            <div class="feature-visual">
+                <div class="mock-window" style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);">
+                    <div class="mock-header">
+                        <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
+                    </div>
+                    <div class="mock-body" style="align-items:center; justify-content:center;">
+                        <i class="fas fa-magic" style="font-size: 3rem; color: var(--accent-purple); opacity: 0.5;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="feature-row">
+            <div class="feature-content">
+                <h3 data-i18n="feat_3_title">个性化自动化 (Persona Automation)</h3>
+                <p data-i18n="feat_3_desc">从"单次任务"进化到"持续执行"。AOE 学习你的工作习惯，为你自动化繁琐的流程。</p>
+                <ul class="feature-list">
+                    <li data-i18n="feat_3_li_1"><i class="fas fa-check-circle"></i> 学习你的成功工作流 (Workflow)</li>
+                    <li data-i18n="feat_3_li_2"><i class="fas fa-check-circle"></i> 自动执行周期性任务</li>
+                    <li data-i18n="feat_3_li_3"><i class="fas fa-check-circle"></i> "Clock out at the lake" - 让 AI 替你加班</li>
+                </ul>
+            </div>
+            <div class="feature-visual">
+                <div class="mock-window">
+                    <div class="mock-header">
+                        <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
+                    </div>
+                    <div class="mock-body" style="flex-direction:column; gap:10px;">
+                        <div style="height:10px; width:60%; background:#e0e0e0; border-radius:4px;"></div>
+                        <div style="height:10px; width:80%; background:#e0e0e0; border-radius:4px;"></div>
+                        <div style="height:10px; width:40%; background:#e0e0e0; border-radius:4px;"></div>
+                        <div style="margin-top:auto; padding:10px; background:#e3f2fd; border-radius:6px; font-size:0.7rem; color:#1565c0;">
+                            Auto-generating report...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Vision / Final CTA -->
+    <section id="vision" style="background: var(--bg-color); padding: 6rem 2rem; text-align: center;">
+        <div class="container">
+            <h2 style="font-size: 3rem; margin-bottom: 2rem;" data-i18n="vision_title">Your Operating System just woke up.</h2>
+            <p style="font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 4rem; max-width: 700px; margin-left: auto; margin-right: auto;">
+                <span data-i18n="vision_desc">从今天起，不再是你在适应 AI，而是 AI 在适应你。<br>加入 AOE，体验未来的办公方式。</span><br>
+                <span style="display:block; margin-top: 1rem; color: var(--text-primary); font-weight: 500;" data-i18n="vision_sub">
+                    Let AOE Clock in on your laptop. You Clock out at the lake.
+                </span>
+            </p>
+            <a href="#" class="cta-button" style="padding: 1.2rem 3rem; font-size: 1.2rem; background: linear-gradient(90deg, #007aff, #af52de); border:none;" data-i18n="vision_cta">加入等待名单</a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-logo">AOE</div>
+        <div class="footer-links">
+            <a href="#" data-i18n="footer_about">关于我们</a>
+            <a href="#" data-i18n="footer_docs">产品文档</a>
+            <a href="#" data-i18n="footer_privacy">隐私政策</a>
+            <a href="#" data-i18n="footer_contact">联系我们</a>
+        </div>
+        <p class="copyright">&copy; 2025 AOE (Agent Office Environment). All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Translations
+        const translations = {
+            zh: {
+                nav_manifesto: "理念", nav_environment: "环境", nav_features: "功能", nav_vision: "愿景", nav_cta: "加入等待名单",
+                hero_tag_1: "All in one", hero_tag_2: "Local Super Agent", hero_tag_3: "Context Aware", hero_tag_4: "Your Habits & Taste",
+                hero_title_main: "拒绝给 AI 打工",
+                hero_title_sub: "你拿着高薪，却干着搬运工的活。<br>你是 AI 的『人肉数据总线』。找文件、喂上下文、切窗口... 你在替这个号称『智能』的工具干苦力。",
+                hero_subtitle: "别搜了，直接命令。别整理了，让它流动。Don't Manage. Create.<br>AOE 是你的『原生 Agent 办公环境』，一个真正懂你、为你思考的操作系统级 AI。",
+                hero_cta: "开始体验 AOE",
+                manifesto_title: "The Frictionless Standard",
+                manifesto_desc: "我们拒绝让高薪的你成为 AI 的'数据搬运工'。",
+                card_1_title: "拒绝上传/下载", card_1_desc: "你的文件不是'素材'，而是你的<strong>数字资产</strong>。AOE 原地索引，拒绝任何形式的上传下载。数据就在那里，动它做什么？",
+                card_2_title: "拒绝提示词工程", card_2_desc: "别再写小作文了。AOE 懂你的项目背景、行文风格和最终目标。<strong>上下文即 Prompt</strong>，懂的都懂。",
+                card_3_title: "拒绝窗口切换", card_3_desc: "还在 Alt-Tab 切来切去？编辑器、浏览器、终端、AI... AOE 把它们熔为一炉。<strong>One Flow, One Focus.</strong>",
+                card_4_title: "拒绝复制粘贴", card_4_desc: "Ctrl-C/Ctrl-V 是上个世纪的陋习。在 AOE 里，信息如水般流动。你只管思考，搬运交给它。",
+                card_5_title: "拒绝连线编排", card_5_desc: "<strong>文档即真理</strong>。别再拖拉拽画什么'工作流画布'了。AOE 自动理解你的文档结构，自动干活。Less UI, More Doing.",
+                card_6_title: "拒绝重复劳动", card_6_desc: "拒绝任何形式的重复劳动。AOE 深度学习你的<strong>肌肉记忆</strong>。你也能一键加载大神的 ComboSkills。一次教会，永久自动化。",
+                env_title: "The chatbot era is over.<br>The Environment era begins.",
+                env_tools: "我们连接一切工具<br>(Notion, Office365, Slack, X, Discord, ChatGPT, Claude, Linear, Jira, Zoom, Teams, Enterprise Internal Systems...)",
+                env_text_1: "别的 Agent 总想当你的'产品经理'，给你派活、拆解任务、教你做事。",
+                env_text_2: "但 AOE 选择做你的 <strong>超级管家</strong>，为你打理一切杂务。",
+                features_title: "重塑你的工作流",
+                feat_1_title: "统一入口 (Unified Entry)", feat_1_desc: "<strong>下载文件夹</strong>就是数字垃圾场。AOE 接管一切：文件、网页、对话，一站式索引，<strong>所见即所得</strong>。",
+                feat_1_li_1: "<i class=\"fas fa-check-circle\"></i> 自动根据项目重命名下载文件", feat_1_li_2: "<i class=\"fas fa-check-circle\"></i> 语义化搜索本地所有资产", feat_1_li_3: "<i class=\"fas fa-check-circle\"></i> 文件、网页、对话 All-in-One 视图",
+                feat_2_title: "主动上下文 (Active Context)", feat_2_desc: "AOE 不是只会答题的做题家，它是你的<strong>影子</strong>。它预判你的下一步，把弹药递到你手边。",
+                feat_2_li_1: "<i class=\"fas fa-check-circle\"></i> 自动注入相关文件作为上下文", feat_2_li_2: "<i class=\"fas fa-check-circle\"></i> 跨模态理解：文档、图片、音频", feat_2_li_3: "<i class=\"fas fa-check-circle\"></i> 隐私优先：数据本地处理，云端脱敏",
+                feat_3_title: "千人千面 (Persona Automation)", feat_3_desc: "从'单次指令'进化到'持续执行'。AOE 复刻你的工作流，<strong>替你加班，替你卷</strong>。",
+                feat_3_li_1: "<i class=\"fas fa-check-circle\"></i> 学习你的成功工作流 (Workflow)", feat_3_li_2: "<i class=\"fas fa-check-circle\"></i> 自动执行周期性任务", feat_3_li_3: "<i class=\"fas fa-check-circle\"></i> <strong>你在湖边喝咖啡，AOE 在云端跑数据。</strong>",
+                vision_title: "Your Operating System just woke up.",
+                vision_desc: "从今天起，不再是你在适应 AI，而是 AI 在适应你。<br>加入 AOE，体验未来的办公方式。",
+                vision_sub: "Let AOE Clock in on your laptop. You Clock out at the lake.",
+                vision_cta: "加入等待名单",
+                footer_about: "关于我们", footer_docs: "产品文档", footer_privacy: "隐私政策", footer_contact: "联系我们"
+            },
+            en: {
+                nav_manifesto: "Manifesto", nav_environment: "Environment", nav_features: "Features", nav_vision: "Vision", nav_cta: "Join Waitlist",
+                hero_tag_1: "All in one", hero_tag_2: "Local Super Agent", hero_tag_3: "Context Aware", hero_tag_4: "Your Habits & Taste",
+                hero_title_main: "Stop Working For Your AI",
+                hero_title_sub: "You are highly paid, yet you spend half your day doing manual labor. <br>You act as a Data Mule for your AI. You fetch files. You feed context. You switch windows. You bridge the gap between your actual work and the \"smart\" tool that is supposed to help you.",
+                hero_subtitle: "Don't search, Command. Don't Manage. Create. Flow. <br>AOE is your work habitat, an AI Office Environment that truly understands and thinks for you.",
+                hero_cta: "Experience AOE",
+                manifesto_title: "The Frictionless Standard",
+                manifesto_desc: "We refuse to let high-paid professionals become \"Data Mules\" for AI.",
+                card_1_title: "No Uploads/Downloads", card_1_desc: "Your files are not \"materials\" to be moved, but your knowledge base. AOE reads in place, no migration needed.",
+                card_2_title: "No \"Prompt Engineering\"", card_2_desc: "Why explain your project to a stranger? AOE knows history, tone, and goals. Context IS the Prompt.",
+                card_3_title: "No Window Switching", card_3_desc: "Stop Alt-Tabbing between editor and browser. File management, browser, and AI are now one.",
+                card_4_title: "No Copy-Paste", card_4_desc: "Stop copying and pasting between apps. Data flow should be automatic and seamless.",
+                card_5_title: "No Canvas-MCP", card_5_desc: "Your documents are everything. AOE learns, organizes, and works automatically, no drag-and-drop workflows needed.",
+                card_6_title: "No Repeat", card_6_desc: "AOE learns your habits and preferences. You can also download ComboSkills or Claude Skills from others. If it repeats, leave it to the Agent.",
+                env_title: "The chatbot era is over.<br>The Environment era begins.",
+                env_tools: "We connect everything<br>(Notion, Office365, Slack, X, Discord, ChatGPT, Claude, Linear, Jira, Zoom, Teams, Enterprise Internal Systems...)",
+                env_text_1: "Other AI agents try to be your \"Manager.\" They want to plan your tasks, restructure your projects, and tell you how to work.",
+                env_text_2: "But AOE <strong>manages</strong> them all for you.",
+                features_title: "Reinvent Your Workflow",
+                feat_1_title: "Unified Entry", feat_1_desc: "AOE ends the chaos of \"Downloads folder\". It intelligently manages your file system, web browsing, and AI interactions.",
+                feat_1_li_1: "<i class=\"fas fa-check-circle\"></i> Auto-rename downloads based on project", feat_1_li_2: "<i class=\"fas fa-check-circle\"></i> Semantic search for all local assets", feat_1_li_3: "<i class=\"fas fa-check-circle\"></i> Files, Browser, Agent All-in-One view",
+                feat_2_title: "Active Context", feat_2_desc: "AOE is not a passive chatbot, it's your shadow. It understands your current task and prepares the background info needed.",
+                feat_2_li_1: "<i class=\"fas fa-check-circle\"></i> Auto-inject relevant files as context", feat_2_li_2: "<i class=\"fas fa-check-circle\"></i> Multi-modal understanding: Docs, Images, Audio", feat_2_li_3: "<i class=\"fas fa-check-circle\"></i> Privacy first: Local processing, Cloud masking",
+                feat_3_title: "Persona Automation", feat_3_desc: "Evolve from \"one-off tasks\" to \"continuous execution\". AOE learns your work habits to automate tedious flows.",
+                feat_3_li_1: "<i class=\"fas fa-check-circle\"></i> Learn your successful workflows", feat_3_li_2: "<i class=\"fas fa-check-circle\"></i> Auto-execute periodic tasks", feat_3_li_3: "<i class=\"fas fa-check-circle\"></i> \"Clock out at the lake\" - Let AI work overtime",
+                vision_title: "Your Operating System just woke up.",
+                vision_desc: "From today, you don't adapt to AI, AI adapts to you.<br>Join AOE, experience the future of work.",
+                vision_sub: "Let AOE Clock in on your laptop. You Clock out at the lake.",
+                vision_cta: "Join Waitlist",
+                footer_about: "About Us", footer_docs: "Documentation", footer_privacy: "Privacy Policy", footer_contact: "Contact Us"
+            },
+            ja: {
+                nav_manifesto: "理念", nav_environment: "環境", nav_features: "機能", nav_vision: "ビジョン", nav_cta: "Join Waitlist",
+                hero_tag_1: "All in one", hero_tag_2: "Local Super Agent", hero_tag_3: "Context Aware", hero_tag_4: "Your Habits & Taste",
+                hero_title_main: "AIのために働くのはやめよう",
+                hero_title_sub: "You are highly paid, yet you spend half your day doing manual labor. <br>You act as a Data Mule for your AI. You fetch files. You feed context. You switch windows. You bridge the gap between your actual work and the \"smart\" tool that is supposed to help you.",
+                hero_subtitle: "検索せず、命令せよ。整理せず、流動せよ。Don't Manage. Create.<br>AOEはあなたの仕事の生息地であり、真にあなたを理解し、あなたのために考えるAIオフィス環境です。",
+                hero_cta: "AOEを体験する",
+                manifesto_title: "The Frictionless Standard",
+                manifesto_desc: "私たちは、高給取りのあなたがAIの「データ運び屋」になることを拒否します。",
+                card_1_title: "No Uploads/Downloads", card_1_desc: "あなたのファイルは移動させる「素材」ではなく、あなたの知識ベースです。AOEはその場で読み取り、移行は不要です。",
+                card_2_title: "No \"Prompt Engineering\"", card_2_desc: "なぜ見知らぬ人にプロジェクトを説明するのですか？AOEは履歴、トーン、目標を知っています。文脈こそがプロンプトです。",
+                card_3_title: "No Window Switching", card_3_desc: "エディタとブラウザの間でAlt-Tabをするのはやめましょう。ファイル管理、ブラウザ、AIは今、一つになりました。",
+                card_4_title: "No Copy-Paste", card_4_desc: "アプリ間でのコピペをやめましょう。データフローは自動的でシームレスであるべきです。",
+                card_5_title: "No Canvas-MCP", card_5_desc: "ドキュメントがすべてです。AOEは自動的に学習、整理、作業を行い、ドラッグ＆ドロップのワークフローは不要です。",
+                card_6_title: "No Repeat", card_6_desc: "AOEはあなたの習慣や好みを学習します。他の人が共有したComboSkillsやClaude Skillsをダウンロードすることもできます。繰り返す作業は、エージェントに任せましょう。",
+                env_title: "The chatbot era is over.<br>The Environment era begins.",
+                env_tools: "あらゆるツールを接続します<br>(Notion, Office365, Slack, X, Discord, ChatGPT, Claude, Linear, Jira, Zoom, Teams, Enterprise Internal Systems...)",
+                env_text_1: "Other AI agents try to be your \"Manager.\" They want to plan your tasks, restructure your projects, and tell you how to work.",
+                env_text_2: "But AOE <strong>manages</strong> them all for you.",
+                features_title: "ワークフローの再構築",
+                feat_1_title: "統一された入り口 (Unified Entry)", feat_1_desc: "AOEは「ダウンロードフォルダ」の混乱を終わらせます。ファイルシステム、Webブラウジング、AIインタラクションをインテリジェントに管理します。",
+                feat_1_li_1: "<i class=\"fas fa-check-circle\"></i> プロジェクトに基づいてダウンロードファイルを自動リネーム", feat_1_li_2: "<i class=\"fas fa-check-circle\"></i> すべてのローカル資産のセマンティック検索", feat_1_li_3: "<i class=\"fas fa-check-circle\"></i> ファイル、ブラウザ、エージェントのオールインワンビュー",
+                feat_2_title: "アクティブコンテキスト (Active Context)", feat_2_desc: "AOEは受動的なチャットボットではなく、あなたの影です。現在のタスクを理解し、必要な背景情報を積極的に準備します。",
+                feat_2_li_1: "<i class=\"fas fa-check-circle\"></i> 関連ファイルをコンテキストとして自動注入", feat_2_li_2: "<i class=\"fas fa-check-circle\"></i> マルチモーダル理解：ドキュメント、画像、音声", feat_2_li_3: "<i class=\"fas fa-check-circle\"></i> プライバシー優先：ローカル処理、クラウドマスキング",
+                feat_3_title: "パーソナライズされた自動化 (Persona Automation)", feat_3_desc: "「単発タスク」から「継続的実行」へ進化。AOEはあなたの仕事の習慣を学習し、面倒なフローを自動化します。",
+                feat_3_li_1: "<i class=\"fas fa-check-circle\"></i> 成功したワークフローを学習", feat_3_li_2: "<i class=\"fas fa-check-circle\"></i> 定期的なタスクを自動実行", feat_3_li_3: "<i class=\"fas fa-check-circle\"></i> \"Clock out at the lake\" - AIに残業させよう",
+                vision_title: "Your Operating System just woke up.",
+                vision_desc: "今日から、あなたがAIに適応するのではなく、AIがあなたに適応します。<br>AOEに参加して、未来の働き方を体験してください。",
+                vision_sub: "Let AOE Clock in on your laptop. You Clock out at the lake.",
+                vision_cta: "ウェイトリストに参加",
+                footer_about: "私たちについて", footer_docs: "ドキュメント", footer_privacy: "プライバシーポリシー", footer_contact: "お問い合わせ"
+            },
+            de: {
+                nav_manifesto: "Manifest", nav_environment: "Umgebung", nav_features: "Funktionen", nav_vision: "Vision", nav_cta: "Warteliste beitreten",
+                hero_tag_1: "All in one", hero_tag_2: "Local Super Agent", hero_tag_3: "Context Aware", hero_tag_4: "Your Habits & Taste",
+                hero_title_main: "Hör auf, für deine KI zu arbeiten",
+                hero_title_sub: "You are highly paid, yet you spend half your day doing manual labor. <br>You act as a Data Mule for your AI. You fetch files. You feed context. You switch windows. You bridge the gap between your actual work and the \"smart\" tool that is supposed to help you.",
+                hero_subtitle: "Nicht suchen, befehlen. Nicht verwalten, fließen lassen. Don't Manage. Create.<br>AOE ist dein Arbeitsraum, eine KI-Umgebung (AI Office Environment), die dich wirklich versteht und für dich denkt.",
+                hero_cta: "AOE erleben",
+                manifesto_title: "The Frictionless Standard",
+                manifesto_desc: "Wir weigern uns, gut bezahlte Profis zu \"Daten-Maultieren\" für KI werden zu lassen.",
+                card_1_title: "No Uploads/Downloads", card_1_desc: "Deine Dateien sind kein \"Material\", das verschoben werden muss, sondern deine Wissensbasis. AOE liest an Ort und Stelle, keine Migration nötig.",
+                card_2_title: "No \"Prompt Engineering\"", card_2_desc: "Warum einem Fremden dein Projekt erklären? AOE kennt Verlauf, Tonfall und Ziele. Kontext IST der Prompt.",
+                card_3_title: "No Window Switching", card_3_desc: "Hör auf, zwischen Editor und Browser hin und her zu wechseln (Alt-Tab). Dateiverwaltung, Browser und KI sind jetzt eins.",
+                card_4_title: "No Copy-Paste", card_4_desc: "Stopp das Kopieren und Einfügen zwischen Apps. Der Datenfluss sollte automatisch und nahtlos sein.",
+                card_5_title: "No Canvas-MCP", card_5_desc: "Deine Dokumente sind alles. AOE lernt, organisiert und arbeitet automatisch, ohne Drag-and-Drop-Workflows.",
+                card_6_title: "No Repeat", card_6_desc: "AOE lernt deine Gewohnheiten und Vorlieben. Du kannst auch ComboSkills oder Claude Skills von anderen herunterladen. Wenn es sich wiederholt, überlasse es dem Agenten.",
+                env_title: "The chatbot era is over.<br>The Environment era begins.",
+                env_tools: "Wir verbinden alles<br>(Notion, Office365, Slack, X, Discord, ChatGPT, Claude, Linear, Jira, Zoom, Teams, Enterprise Internal Systems...)",
+                env_text_1: "Other AI agents try to be your \"Manager.\" They want to plan your tasks, restructure your projects, and tell you how to work.",
+                env_text_2: "But AOE <strong>manages</strong> them all for you.",
+                features_title: "Erfinde deinen Workflow neu",
+                feat_1_title: "Zentraler Einstieg (Unified Entry)", feat_1_desc: "AOE beendet das Chaos des \"Downloads-Ordners\". Es verwaltet intelligent dein Dateisystem, Web-Browsing und KI-Interaktionen.",
+                feat_1_li_1: "<i class=\"fas fa-check-circle\"></i> Downloads automatisch nach Projekt umbenennen", feat_1_li_2: "<i class=\"fas fa-check-circle\"></i> Semantische Suche für alle lokalen Assets", feat_1_li_3: "<i class=\"fas fa-check-circle\"></i> Dateien, Browser, Agent All-in-One-Ansicht",
+                feat_2_title: "Aktiver Kontext (Active Context)", feat_2_desc: "AOE ist kein passiver Chatbot, es ist dein Schatten. Es versteht deine aktuelle Aufgabe und bereitet aktiv die benötigten Hintergrundinformationen vor.",
+                feat_2_li_1: "<i class=\"fas fa-check-circle\"></i> Relevante Dateien automatisch als Kontext einfügen", feat_2_li_2: "<i class=\"fas fa-check-circle\"></i> Multimodales Verständnis: Dokumente, Bilder, Audio", feat_2_li_3: "<i class=\"fas fa-check-circle\"></i> Datenschutz zuerst: Lokale Verarbeitung, Cloud-Maskierung",
+                feat_3_title: "Personalisierte Automatisierung", feat_3_desc: "Entwickle dich von \"Einmalaufgaben\" zu \"kontinuierlicher Ausführung\". AOE lernt deine Arbeitsgewohnheiten, um mühsame Abläufe zu automatisieren.",
+                feat_3_li_1: "<i class=\"fas fa-check-circle\"></i> Lerne deine erfolgreichen Workflows", feat_3_li_2: "<i class=\"fas fa-check-circle\"></i> Führe periodische Aufgaben automatisch aus", feat_3_li_3: "<i class=\"fas fa-check-circle\"></i> \"Clock out at the lake\" - Lass die KI Überstunden machen",
+                vision_title: "Your Operating System just woke up.",
+                vision_desc: "Ab heute passt du dich nicht mehr der KI an, die KI passt sich dir an.<br>Tritt AOE bei, erlebe die Zukunft der Arbeit.",
+                vision_sub: "Let AOE Clock in on your laptop. You Clock out at the lake.",
+                vision_cta: "Warteliste beitreten",
+                footer_about: "Über uns", footer_docs: "Dokumentation", footer_privacy: "Datenschutz", footer_contact: "Kontakt"
+            },
+            ko: {
+                nav_manifesto: "철학", nav_environment: "환경", nav_features: "기능", nav_vision: "비전", nav_cta: "Join Waitlist",
+                hero_tag_1: "All in one", hero_tag_2: "Local Super Agent", hero_tag_3: "Context Aware", hero_tag_4: "Your Habits & Taste",
+                hero_title_main: "AI를 위해 일하지 마세요",
+                hero_title_sub: "You are highly paid, yet you spend half your day doing manual labor. <br>You act as a Data Mule for your AI. You fetch files. You feed context. You switch windows. You bridge the gap between your actual work and the \"smart\" tool that is supposed to help you.",
+                hero_subtitle: "검색하지 말고, 명령하세요. 정리하지 말고, 흐르게 하세요. Don't Manage. Create.<br>AOE는 당신의 업무 서식지이며, 진정으로 당신을 이해하고 당신을 위해 생각하는 AI 오피스 환경입니다。",
+                hero_cta: "AOE 경험하기",
+                manifesto_title: "The Frictionless Standard",
+                manifesto_desc: "우리는 고액 연봉자인 당신이 AI의 \"데이터 짐꾼\"이 되는 것을 거부합니다。",
+                card_1_title: "No Uploads/Downloads", card_1_desc: "당신의 파일은 옮겨야 할 \"자료\"가 아니라 지식 기반입니다. AOE는 제자리에서 읽으며, 이동이 필요 없습니다。",
+                card_2_title: "No \"Prompt Engineering\"", card_2_desc: "왜 낯선 사람에게 프로젝트를 설명합니까? AOE는 역사, 어조, 목표를 알고 있습니다. 맥락이 곧 프롬프트입니다。",
+                card_3_title: "No Window Switching", card_3_desc: "에디터와 브라우저 사이에서 Alt-Tab을 멈추세요. 파일 관리, 브라우저, AI가 이제 하나가 되었습니다。",
+                card_4_title: "No Copy-Paste", card_4_desc: "앱 간에 복사 붙여넣기를 멈추세요. 데이터 흐름은 자동적이고 매끄러워야 합니다。",
+                card_5_title: "No Canvas-MCP", card_5_desc: "문서가 전부입니다. AOE는 자동으로 학습, 정리, 작업을 수행하며, 드래그 앤 드롭 워크플로우가 필요 없습니다。",
+                card_6_title: "No Repeat", card_6_desc: "AOE는 당신의 습관과 취향을 학습합니다. 다른 사람이 공유한 ComboSkills 또는 Claude Skills를 다운로드할 수도 있습니다. 반복된다면, 에이전트에게 맡기세요。",
+                env_title: "The chatbot era is over.<br>The Environment era begins.",
+                env_tools: "모든 도구를 연결합니다<br>(Notion, Office365, Slack, X, Discord, ChatGPT, Claude, Linear, Jira, Zoom, Teams, Enterprise Internal Systems...)",
+                env_text_1: "Other AI agents try to be your \"Manager.\" They want to plan your tasks, restructure your projects, and tell you how to work.",
+                env_text_2: "But AOE <strong>manages</strong> them all for you.",
+                features_title: "워크플로우의 재정의",
+                feat_1_title: "통합 진입점 (Unified Entry)", feat_1_desc: "AOE는 \"다운로드 폴더\"의 혼란을 끝냅니다. 파일 시스템, 웹 브라우징, AI 상호 작용을 지능적으로 관리합니다。",
+                feat_1_li_1: "<i class=\"fas fa-check-circle\"></i> 프로젝트에 따라 다운로드 파일 자동 이름 변경", feat_1_li_2: "<i class=\"fas fa-check-circle\"></i> 모든 로컬 자산에 대한 의미 검색", feat_1_li_3: "<i class=\"fas fa-check-circle\"></i> 파일, 브라우저, 에이전트 올인원 뷰",
+                feat_2_title: "능동적 맥락 (Active Context)", feat_2_desc: "AOE는 수동적인 챗봇이 아니라 당신의 그림자입니다. 현재 작업을 이해하고 필요한 배경 정보를 능동적으로 준비합니다。",
+                feat_2_li_1: "<i class=\"fas fa-check-circle\"></i> 관련 파일을 맥락으로 자동 주입", feat_2_li_2: "<i class=\"fas fa-check-circle\"></i> 멀티모달 이해: 문서, 이미지, 오디오", feat_2_li_3: "<i class=\"fas fa-check-circle\"></i> 프라이버시 우선: 로컬 처리, 클라우드 마스킹",
+                feat_3_title: "개인화 자동화 (Persona Automation)", feat_3_desc: "단발성 작업에서 지속적 실행으로 진화하세요. AOE는 당신의 업무 습관을 학습하여 지루한 흐름을 자동화합니다。",
+                feat_3_li_1: "<i class=\"fas fa-check-circle\"></i> 성공적인 워크플로우 학습", feat_3_li_2: "<i class=\"fas fa-check-circle\"></i> 주기적인 작업 자동 실행", feat_3_li_3: "<i class=\"fas fa-check-circle\"></i> \"Clock out at the lake\" - AI가 야근하게 하세요",
+                vision_title: "Your Operating System just woke up.",
+                vision_desc: "오늘부터 당신이 AI에 적응하는 것이 아니라, AI가 당신에게 적응합니다。<br>AOE에 가입하여 미래의 업무 방식을 경험하세요。",
+                vision_sub: "Let AOE Clock in on your laptop. You Clock out at the lake.",
+                vision_cta: "대기자 명단 등록",
+                footer_about: "회사 소개", footer_docs: "제품 문서", footer_privacy: "개인정보 처리방침", footer_contact: "문의하기"
+            },
+            es: {
+                nav_manifesto: "Manifiesto", nav_environment: "Entorno", nav_features: "Funciones", nav_vision: "Visión", nav_cta: "Join Waitlist",
+                hero_tag_1: "All in one", hero_tag_2: "Local Super Agent", hero_tag_3: "Context Aware", hero_tag_4: "Your Habits & Taste",
+                hero_title_main: "Deja de trabajar para tu IA",
+                hero_title_sub: "You are highly paid, yet you spend half your day doing manual labor. <br>You act as a Data Mule for your AI. You fetch files. You feed context. You switch windows. You bridge the gap between your actual work and the \"smart\" tool that is supposed to help you.",
+                hero_subtitle: "No busques, ordena. No organices, fluye. Don't Manage. Create.<br>AOE es tu hábitat de trabajo, un entorno de oficina de IA (AI Office Environment) que realmente te entiende y piensa por ti.",
+                hero_cta: "Experimenta AOE",
+                manifesto_title: "The Frictionless Standard",
+                manifesto_desc: "Nos negamos a dejar que profesionales bien pagados se conviertan en \"mulas de datos\" para la IA.",
+                card_1_title: "No Uploads/Downloads", card_1_desc: "Tus archivos no son \"material\" para mover, sino tu base de conocimiento. AOE lee en el lugar, sin migración.",
+                card_2_title: "No \"Prompt Engineering\"", card_2_desc: "¿Por qué explicar tu proyecto a un extraño? AOE conoce el historial, el tono y los objetivos. El contexto ES el Prompt.",
+                card_3_title: "No Window Switching", card_3_desc: "Deja de hacer Alt-Tab entre el editor y el navegador. La gestión de archivos, el navegador y la IA son ahora uno solo.",
+                card_4_title: "No Copy-Paste", card_4_desc: "Deja de copiar y pegar entre aplicaciones. El flujo de datos debe ser automático y fluido.",
+                card_5_title: "No Canvas-MCP", card_5_desc: "Tus documentos lo son todo. AOE aprende, organiza y trabaja automáticamente, sin flujos de trabajo de arrastrar y soltar.",
+                card_6_title: "No Repeat", card_6_desc: "AOE aprende tus hábitos y preferencias. También puedes descargar ComboSkills o Claude Skills compartidos por otros. Si se repite, déjalo al Agente.",
+                env_title: "The chatbot era is over.<br>The Environment era begins.",
+                env_tools: "Conectamos todo<br>(Notion, Office365, Slack, X, Discord, ChatGPT, Claude, Linear, Jira, Zoom, Teams, Enterprise Internal Systems...)",
+                env_text_1: "Other AI agents try to be your \"Manager.\" They want to plan your tasks, restructure your projects, and tell you how to work.",
+                env_text_2: "But AOE <strong>manages</strong> them all for you.",
+                features_title: "Reinventa tu flujo de trabajo",
+                feat_1_title: "Entrada Unificada (Unified Entry)", feat_1_desc: "AOE termina con el caos de la \"carpeta de descargas\". Gestiona inteligentemente tu sistema de archivos, navegación web e interacciones de IA.",
+                feat_1_li_1: "<i class=\"fas fa-check-circle\"></i> Renombrar descargas automáticamente según el proyecto", feat_1_li_2: "<i class=\"fas fa-check-circle\"></i> Búsqueda semántica para todos los activos locales", feat_1_li_3: "<i class=\"fas fa-check-circle\"></i> Archivos, Navegador, Agente en una vista Todo en Uno",
+                feat_2_title: "Contexto Activo (Active Context)", feat_2_desc: "AOE no es un chatbot pasivo, es tu sombra. Entiende tu tarea actual y prepara activamente la información de fondo necesaria.",
+                feat_2_li_1: "<i class=\"fas fa-check-circle\"></i> Inyectar archivos relevantes como contexto automáticamente", feat_2_li_2: "<i class=\"fas fa-check-circle\"></i> Comprensión multimodal: Documentos, Imágenes, Audio", feat_2_li_3: "<i class=\"fas fa-check-circle\"></i> Privacidad primero: Procesamiento local, enmascaramiento en la nube",
+                feat_3_title: "Automatización Personalizada", feat_3_desc: "Evoluciona de \"tareas únicas\" a \"ejecución continua\". AOE aprende tus hábitos de trabajo para automatizar flujos tediosos.",
+                feat_3_li_1: "<i class=\"fas fa-check-circle\"></i> Aprende tus flujos de trabajo exitosos", feat_3_li_2: "<i class=\"fas fa-check-circle\"></i> Ejecuta tareas periódicas automáticamente", feat_3_li_3: "<i class=\"fas fa-check-circle\"></i> \"Clock out at the lake\" - Deja que la IA haga horas extras",
+                vision_title: "Your Operating System just woke up.",
+                vision_desc: "A partir de hoy, no te adaptas a la IA, la IA se adapta a ti.<br>Únete a AOE, experimenta el futuro del trabajo.",
+                vision_sub: "Let AOE Clock in on your laptop. You Clock out at the lake.",
+                vision_cta: "Unirse a la lista de espera",
+                footer_about: "Sobre nosotros", footer_docs: "Documentación", footer_privacy: "Política de privacidad", footer_contact: "Contáctanos"
+            }
+        };
+
+        const flags = {
+            zh: "🇨🇳", en: "🇺🇸", ja: "🇯🇵", de: "🇩🇪", ko: "🇰🇷", es: "🇪🇸"
+        };
+
+        function changeLanguage(lang) {
+            const elements = document.querySelectorAll('[data-i18n]');
+            elements.forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    element.innerHTML = translations[lang][key];
+                }
+            });
+            document.documentElement.lang = lang;
+            
+            // Update flag button
+            const btn = document.getElementById('current-lang-btn');
+            btn.innerHTML = flags[lang];
+        }
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 20) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
+        });
+
+        // Improved scroll animation trigger with smoother threshold
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: "0px 0px -50px 0px"
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-in');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.glass-card, .feature-row, .section-title').forEach(el => {
+            el.style.opacity = '0';
+            // el.classList.add('delay-1'); // Removed direct delay class to let CSS handle flow
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
