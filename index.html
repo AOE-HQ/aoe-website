@@ -196,9 +196,7 @@
             width: 44px;
         }
 
-        .lang-dropdown:hover .lang-menu {
-            display: block;
-        }
+        /* .lang-dropdown:hover .lang-menu { display: block; } removed for click support */
 
         .lang-menu a {
             cursor: pointer;
@@ -598,12 +596,12 @@
                 <button class="lang-btn" id="current-lang-btn">🇨🇳</button>
                 <div class="lang-menu">
                     <div class="lang-menu-inner">
-                        <a onclick="changeLanguage('zh')">🇨🇳</a>
-                        <a onclick="changeLanguage('en')">🇺🇸</a>
-                        <a onclick="changeLanguage('ja')">🇯🇵</a>
-                        <a onclick="changeLanguage('de')">🇩🇪</a>
-                        <a onclick="changeLanguage('ko')">🇰🇷</a>
-                        <a onclick="changeLanguage('es')">🇪🇸</a>
+                        <a onclick="changeLanguage('zh'); document.querySelector('.lang-menu').style.display='none'">🇨🇳</a>
+                        <a onclick="changeLanguage('en'); document.querySelector('.lang-menu').style.display='none'">🇺🇸</a>
+                        <a onclick="changeLanguage('ja'); document.querySelector('.lang-menu').style.display='none'">🇯🇵</a>
+                        <a onclick="changeLanguage('de'); document.querySelector('.lang-menu').style.display='none'">🇩🇪</a>
+                        <a onclick="changeLanguage('ko'); document.querySelector('.lang-menu').style.display='none'">🇰🇷</a>
+                        <a onclick="changeLanguage('es'); document.querySelector('.lang-menu').style.display='none'">🇪🇸</a>
                     </div>
                 </div>
             </div>
@@ -1044,6 +1042,33 @@
                 }
             });
         }, observerOptions);
+
+
+        // Initialize language based on browser preference
+        document.addEventListener('DOMContentLoaded', () => {
+            const userLang = navigator.language || navigator.userLanguage;
+            const defaultLang = userLang.startsWith('zh') ? 'zh' : 'en';
+            changeLanguage(defaultLang);
+        });
+
+        // Toggle language menu on click for better mobile/desktop support
+        document.getElementById('current-lang-btn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            const menu = document.querySelector('.lang-menu');
+            if (menu.style.display === 'block') {
+                menu.style.display = 'none';
+            } else {
+                menu.style.display = 'block';
+            }
+        });
+
+        // Hide menu when clicking outside
+        document.addEventListener('click', function() {
+            const menu = document.querySelector('.lang-menu');
+            if (menu && menu.style.display === 'block') {
+                menu.style.display = 'none';
+            }
+        });
 
         document.querySelectorAll('.glass-card, .feature-row, .section-title').forEach(el => {
             el.style.opacity = '0';
